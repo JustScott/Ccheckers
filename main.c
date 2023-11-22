@@ -31,61 +31,67 @@ int moveLogic(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition, in
     // Ensure there isn't another piece in the desiredPosition
     if ((*pa)[desiredPosition][0] != ' ') {return 0;}
 
-    // If the piece isn't kinged
-    //
-    //  if white: it can only increase index
+    // The index of the space between the desired and current position
+    int jumpablePosition = desiredPosition - currentPosition;
+    jumpablePosition = (jumpablePosition / 2) + currentPosition;
+
+    // Ensure the piece is only moving between a 19 and 6 index change
+    int desiredMinusCurrent = desiredPosition-currentPosition;
+    int absoluteDesiredMinusCurrent = desiredMinusCurrent;
+
+    if (desiredMinusCurrent < 0) {
+        absoluteDesiredMinusCurrent *= -1;
+    }
+    if (absoluteDesiredMinusCurrent > 19) {return 0;}
+    if (absoluteDesiredMinusCurrent < 6) {return 0;}
+
+
+    // if non-king white: it can only increase index
     if ((*pa)[currentPosition][0] == 'w') {
         if (currentPosition > desiredPosition) {return 0;}
 
-        // The user can only move an index of 7, unless there is an opponents piece
-        //  between it and the open spot, then it can move 14
-        if ((desiredPosition-currentPosition) > 19) {return 0;}
-        if ((desiredPosition-currentPosition) < 6) {return 0;}
-        
         // if trying to jump an opponents piece
-        if ((desiredPosition-currentPosition) == 14) {
+        if ((desiredPosition-currentPosition) > 13) {
             // Check the char of the between piece
-            if ((*pa)[desiredPosition-7][0] == 'b') { 
-                // if an opponents piece, remove it
-                (*pa)[desiredPosition-7][0] = ' ';
-            } else {return 0;}
-        }
-        // if trying to jump an opponents piece
-        if ((desiredPosition-currentPosition) == 18) {
-            // Check the char of the between piece
-            if ((*pa)[desiredPosition-9][0] == 'b') { 
-                // if an opponents piece, remove it
-                (*pa)[desiredPosition-9][0] = ' ';
+            if ((*pa)[jumpablePosition][0] == 'b' || (*pa)[jumpablePosition][0] == 'B') { 
+                (*pa)[jumpablePosition][0] = ' ';
             } else {return 0;}
         }
     }
 
-    //  if black: it can only decrease index
-    else if ((*pa)[currentPosition][0] == 'b') {
+    // if non-king black: it can only decrease index
+    if ((*pa)[currentPosition][0] == 'b') {
         if (currentPosition < desiredPosition) {return 0;}
 
-        // The user can only move an index of 7, unless there is an opponents piece
-        //  between it and the open spot, then it can move 14
-        if ((currentPosition-desiredPosition) > 19) {return 0;}
-        if ((currentPosition-desiredPosition) < 6) {return 0;}
-        
         // if trying to jump an opponents piece
-        if ((currentPosition-desiredPosition) == 14) {
+        if ((currentPosition-desiredPosition) > 13) {
             // Check the char of the between piece
-            if ((*pa)[desiredPosition+7][0] == 'w') {
-                // if an opponents piece, remove it
-                (*pa)[desiredPosition+7][0] = ' ';
-            } else {return 0;}
-        }
-        // if trying to jump an opponents piece
-        if ((currentPosition-desiredPosition) == 18) {
-            // Check the char of the between piece
-            if ((*pa)[desiredPosition+9][0] == 'w') {
-                // if an opponents piece, remove it
-                (*pa)[desiredPosition+9][0] = ' ';
+            if ((*pa)[jumpablePosition][0] == 'w' || (*pa)[jumpablePosition][0] == 'W') {
+                (*pa)[jumpablePosition][0] = ' ';
             } else {return 0;}
         }
     }
+
+    //  if black or white king piece
+    if ((*pa)[currentPosition][0] == 'W' || (*pa)[currentPosition][0] == 'B') {
+        // If moving more than one square
+        if ((currentPosition-desiredPosition) > 13 || (desiredPosition-currentPosition) > 13) {
+            // if white king
+            if ((*pa)[currentPosition][0] == 'W') {
+                if ((*pa)[jumpablePosition][0] == 'b' || (*pa)[jumpablePosition][0] == 'B') {
+                    // if an opponents piece, remove it
+                    (*pa)[jumpablePosition][0] = ' ';
+                }   
+            // if black king
+            } else if ((*pa)[currentPosition][0] == 'B') {
+                if ((*pa)[jumpablePosition][0] == 'w' || (*pa)[jumpablePosition][0] == 'W') {
+                    // if an opponents piece, remove it
+                    (*pa)[jumpablePosition][0] = ' ';
+                }
+            }
+        }
+    }
+
 
     // Move the piece out of the currentPosition and into the desiredPosition 
     (*pa)[desiredPosition][0] = (*pa)[currentPosition][0]; 
