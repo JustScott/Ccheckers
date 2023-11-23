@@ -24,12 +24,25 @@
 
 char playersMove[5] = "black";
 
-int moveLogic(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition, int desiredPosition) {
+
+struct checkedMoveResult {
+    // 0 if the function failed
+    int status;
+    // {currentPosition, jumpablePosition, desiredPosition}
+    int moveInstructions[3];
+};
+
+struct checkedMoveResult checkMove(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition, int desiredPosition) {
+    struct checkedMoveResult moveResult;
+    moveResult.status = 0;
+    moveResult.moveInstructions[0] = currentPosition;
+    moveResult.moveInstructions[2] = desiredPosition;
+
     // Ensure the user doesn't try to move to a light square
-    if ((*pa)[desiredPosition][0] == 'l') {return 0;}
+    if ((*pa)[desiredPosition][0] == 'l') {return moveResult;}
 
     // Ensure there isn't another piece in the desiredPosition
-    if ((*pa)[desiredPosition][0] != ' ') {return 0;}
+    if ((*pa)[desiredPosition][0] != ' ') {return moveResult;}
 
     // The index of the space between the desired and current position
     int jumpablePosition = desiredPosition - currentPosition;
@@ -42,56 +55,65 @@ int moveLogic(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition, in
     if (desiredMinusCurrent < 0) {
         absoluteDesiredMinusCurrent *= -1;
     }
-    if (absoluteDesiredMinusCurrent > 19) {return 0;}
-    if (absoluteDesiredMinusCurrent < 6) {return 0;}
+    if (absoluteDesiredMinusCurrent > 19) {return moveResult;}
+    if (absoluteDesiredMinusCurrent < 6) {return moveResult;}
 
 
     // if non-king white: it can only increase index
     if ((*pa)[currentPosition][0] == 'w') {
-        if (currentPosition > desiredPosition) {return 0;}
+        if (currentPosition > desiredPosition) {return moveResult;}
 
         // if trying to jump an opponents piece
-        if ((desiredPosition-currentPosition) > 13) {
+        if ((absoluteDesiredMinusCurrent) > 13) {
             // Check the char of the between piece
             if ((*pa)[jumpablePosition][0] == 'b' || (*pa)[jumpablePosition][0] == 'B') { 
-                (*pa)[jumpablePosition][0] = ' ';
-            } else {return 0;}
+                moveResult.moveInstructions[1] = jumpablePosition;
+            } else {return moveResult;}
         }
     }
 
     // if non-king black: it can only decrease index
     if ((*pa)[currentPosition][0] == 'b') {
-        if (currentPosition < desiredPosition) {return 0;}
+        if (currentPosition < desiredPosition) {return moveResult;}
 
         // if trying to jump an opponents piece
-        if ((currentPosition-desiredPosition) > 13) {
+        if ((absoluteDesiredMinusCurrent) > 13) {
             // Check the char of the between piece
             if ((*pa)[jumpablePosition][0] == 'w' || (*pa)[jumpablePosition][0] == 'W') {
-                (*pa)[jumpablePosition][0] = ' ';
-            } else {return 0;}
+                moveResult.moveInstructions[1] = jumpablePosition;
+            } else {return moveResult;}
         }
     }
 
     //  if black or white king piece
     if ((*pa)[currentPosition][0] == 'W' || (*pa)[currentPosition][0] == 'B') {
         // If moving more than one square
-        if ((currentPosition-desiredPosition) > 13 || (desiredPosition-currentPosition) > 13) {
+        if (absoluteDesiredMinusCurrent > 13) {
             // if white king
             if ((*pa)[currentPosition][0] == 'W') {
                 if ((*pa)[jumpablePosition][0] == 'b' || (*pa)[jumpablePosition][0] == 'B') {
                     // if an opponents piece, remove it
-                    (*pa)[jumpablePosition][0] = ' ';
-                }   
+                    moveResult.moveInstructions[1] = jumpablePosition;
+                } else {return moveResult;}   
             // if black king
             } else if ((*pa)[currentPosition][0] == 'B') {
                 if ((*pa)[jumpablePosition][0] == 'w' || (*pa)[jumpablePosition][0] == 'W') {
                     // if an opponents piece, remove it
-                    (*pa)[jumpablePosition][0] = ' ';
-                }
+                    moveResult.moveInstructions[1] = jumpablePosition;
+                } else {return moveResult;}
             }
         }
     }
 
+    // Successful logic
+    moveResult.status = 1;
+    return moveResult; 
+}
+
+int makeMove(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition, int jumpablePosition, int desiredPosition) {
+    if (jumpablePosition) {
+        (*pa)[jumpablePosition][0] = ' ';
+    }
 
     // Move the piece out of the currentPosition and into the desiredPosition 
     (*pa)[desiredPosition][0] = (*pa)[currentPosition][0]; 
@@ -108,8 +130,18 @@ int moveLogic(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition, in
     if ((*pa)[3][0] == 'b') {(*pa)[3][0] = 'B';}
     if ((*pa)[5][0] == 'b') {(*pa)[5][0] = 'B';}
     if ((*pa)[7][0] == 'b') {(*pa)[7][0] = 'B';}
+}
 
-    return 1; // Successful logic
+int checkMultiHop(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN], int currentPosition) {
+    // Run the squares that are 14 and 18 away from the new currentPosition
+    //  through checkMove to see if they are jumpable to, if they are, return
+    //  1, else return 0. Further logic is handled by the other functions
+    struct checkedMoveResult moveDownRight = checkMove(pa, currentPosition, currentPosition+18);
+    struct checkedMoveResult moveUpLeft = checkMove(pa, currentPosition, currentPosition-18);
+    struct checkedMoveResult moveDownLeft = checkMove(pa, currentPosition, currentPosition+14);
+    struct checkedMoveResult moveUpRight = checkMove(pa, currentPosition, currentPosition-14);
+
+    return moveDownRight.status || moveUpLeft.status || moveDownLeft.status || moveUpRight.status;
 }
 
 void promptUser(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN]) {
@@ -186,8 +218,33 @@ void promptUser(char (*pa)[TOTAL_SQUARES][SQUARE_STR_LEN]) {
     }
 
 
-    // If all the rules were followed and the piece was moved
-    if (moveLogic(pa, currentPosition, desiredPosition)) {
+    struct checkedMoveResult checkedMoveResult1 = checkMove(pa, currentPosition, desiredPosition);
+    
+    // If the checked move above was valid, make the move
+    if (checkedMoveResult1.status) {
+        makeMove(
+            pa, 
+            checkedMoveResult1.moveInstructions[0],
+            checkedMoveResult1.moveInstructions[1],
+            checkedMoveResult1.moveInstructions[2]
+        );
+    }
+
+
+    // Ensure the piece is only moving between a 19 and 6 index change
+    int desiredMinusCurrent = desiredPosition-currentPosition;
+    int absoluteDesiredMinusCurrent = desiredMinusCurrent;
+
+    if (desiredMinusCurrent < 0) {
+        absoluteDesiredMinusCurrent *= -1;
+    }
+
+    // To be able to skip switching players
+    //  1. The current player had to of just jumped an opponent's piece
+    //  2. Their has to be a spot open for another jump as the next move
+    if (absoluteDesiredMinusCurrent > 13 && checkMultiHop(pa, desiredPosition)) {
+        
+    } else if (checkedMoveResult1.status) {
         // switch players
         if (playersMove[0] == 'b') {
             playersMove[0] = 'w';
