@@ -16,10 +16,9 @@
  */
 
 
-#include "lib/coreLogic.h"
-#include "lib/terminalUI.h"
-
+#include "lib/core_logic.h"
+#include "lib/terminal_UI.h"
 
 void main () {
-    run(promptUser);
+    run(prompt_user);
 }

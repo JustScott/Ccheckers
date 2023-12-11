@@ -1,5 +1,5 @@
 /*
- * terminalUI.c - part of the Ccheckers project
+ * terminal_UI.c - part of the Ccheckers project
  * Copyright (C) 2023, Scott Wyman, development@scottwyman.me
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,15 +16,27 @@
  */
 
 #include <stdio.h>
-#include "coreLogic.h"
+#include "core_logic.h"
 
-int promptUser(char (*pa)[64], struct userChosenMove *user, char (*playersMove)[6]) {
-    int tryLimit = 10;
+/**
+ * @brief handles the UI/frontend for prompting the user for moves
+ *         and displaying moves to them. 
+ *
+ * @param peices_array    A pointer to the checker board array
+ * @param userChosenMove  A pointer to a struct that contains variables for the
+ *                         players chosen pieces current index and desired index
+ * @param players_move    A an array of chars that is either 'black' or 'white'
+ *                         depending on whose move it is
+ *
+ * @return  0 if the function succeeds
+ */
+int prompt_user(char (*pieces_array)[64], struct userChosenMove *user, char (*players_move)[6]) {
+    int try_limit = 10;
 
     // Ensure the player chooses one of their pieces
-    while (tryLimit--) {
+    while (try_limit--) {
         printf("\e[1;1H\e[2J"); // Clears the screen
-        if (tryLimit < 9) {
+        if (try_limit < 9) {
             printf("\n\t- Invalid Choice, Try Again -\n");
         }
         printf(
@@ -47,32 +59,32 @@ int promptUser(char (*pa)[64], struct userChosenMove *user, char (*playersMove)[
             "| 56%c |     | 58%c |     | 60%c |     | 62%c |     |\n"
             "+-----+-----+-----+-----+-----+-----+-----+-----+\n",
 
-            (*pa)[1], (*pa)[3], (*pa)[5], (*pa)[7],
-            (*pa)[8], (*pa)[10],(*pa)[12],(*pa)[14],
-            (*pa)[17],(*pa)[19],(*pa)[21],(*pa)[23],
-            (*pa)[24],(*pa)[26],(*pa)[28],(*pa)[30],
-            (*pa)[33],(*pa)[35],(*pa)[37],(*pa)[39],
-            (*pa)[40],(*pa)[42],(*pa)[44],(*pa)[46],
-            (*pa)[49],(*pa)[51],(*pa)[53],(*pa)[55],
-            (*pa)[56],(*pa)[58],(*pa)[60],(*pa)[62]
+            (*pieces_array)[1], (*pieces_array)[3], (*pieces_array)[5], (*pieces_array)[7],
+            (*pieces_array)[8], (*pieces_array)[10],(*pieces_array)[12],(*pieces_array)[14],
+            (*pieces_array)[17],(*pieces_array)[19],(*pieces_array)[21],(*pieces_array)[23],
+            (*pieces_array)[24],(*pieces_array)[26],(*pieces_array)[28],(*pieces_array)[30],
+            (*pieces_array)[33],(*pieces_array)[35],(*pieces_array)[37],(*pieces_array)[39],
+            (*pieces_array)[40],(*pieces_array)[42],(*pieces_array)[44],(*pieces_array)[46],
+            (*pieces_array)[49],(*pieces_array)[51],(*pieces_array)[53],(*pieces_array)[55],
+            (*pieces_array)[56],(*pieces_array)[58],(*pieces_array)[60],(*pieces_array)[62]
         );
 
-        printf("\n(%s) Enter the square number of the piece you wish to move: ", *playersMove);
-        scanf("%i", &user->currentPosition);
+        printf("\n(%s) Enter the square number of the piece you wish to move: ", *players_move);
+        scanf("%i", &user->current_position);
 
         // Ensure the desired position is within the board/array size to
         //  avoid index errors
-        if (user->currentPosition < 64-1 && user->currentPosition >= 0) {
+        if (user->current_position < 64-1 && user->current_position >= 0) {
             // If it's white's moves
-            if ((*pa)[user->currentPosition] == 'w' || (*pa)[user->currentPosition] == 'W') {
+            if ((*pieces_array)[user->current_position] == 'w' || (*pieces_array)[user->current_position] == 'W') {
                 // If the player choose the opponent's color
-                if ((*playersMove)[0] != 'w') {
+                if ((*players_move)[0] != 'w') {
                     continue;
                 }
             // If it's black's move
-            } else if ((*pa)[user->currentPosition] == 'b' || (*pa)[user->currentPosition] == 'B') {
+            } else if ((*pieces_array)[user->current_position] == 'b' || (*pieces_array)[user->current_position] == 'B') {
                 // If the player choose the opponent's color
-                if ((*playersMove)[0] != 'b') {
+                if ((*players_move)[0] != 'b') {
                     continue;
                 }
             } else {continue;} // If the player chooses a blank or white piece
@@ -81,14 +93,14 @@ int promptUser(char (*pa)[64], struct userChosenMove *user, char (*playersMove)[
         // Picking a square to move to
         printf(
             "\n(%s) Which square number should we move '%i%c' to: ", 
-            *playersMove, user->currentPosition, (*pa)[user->currentPosition]
+            *players_move, user->current_position, (*pieces_array)[user->current_position]
         );
 
-        scanf("%i", &user->desiredPosition);
+        scanf("%i", &user->desired_position);
 
         // Ensure the desired position is within the board/array size to
         //  avoid index errors
-        if (user->desiredPosition < 64-1 && user->desiredPosition >= 0) {break;}
+        if (user->desired_position < 64-1 && user->desired_position >= 0) {break;}
     }
 
     return 0;

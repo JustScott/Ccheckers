@@ -20,9 +20,13 @@
 CC=gcc
 
 
-all:
-	$(CC) -o Ccheckers main.c lib/coreLogic.c lib/terminalUI.c 
+all: 
+	$(CC) -o Ccheckers main.c lib/core_logic.c lib/terminal_UI.c 
 
-
-clean:
+clean: 
 	rm -f Ccheckers
+
+run: 
+	./Ccheckers
+
+refresh: clean all run
