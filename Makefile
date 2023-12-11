@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 #
-# build - part of the Ccheckers project
+# Makefile - part of the Ccheckers project
 # Copyright (C) 2023, Scott Wyman, development@scottwyman.me
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -16,4 +16,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-gcc main.c lib/coreLogic.c lib/terminalUI.c -o Ccheckers
+
+CC=gcc
+
+
+all:
+	$(CC) -o Ccheckers main.c lib/coreLogic.c lib/terminalUI.c 
+
+
+clean:
+	rm -f Ccheckers
